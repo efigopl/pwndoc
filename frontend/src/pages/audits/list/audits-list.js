@@ -59,6 +59,7 @@ export default {
             errors: {name: '', language: '', auditType: ''},
             // Selected or New Audit
             currentAudit: {name: '', language: '', auditType: '', type: 'default'}
+        
         }
     },
 
@@ -108,7 +109,7 @@ export default {
             })
         },
 
-         // Get Companies list
+         // Companies list
          getCompanies: function() {
             CompanyService.getCompanies()
             .then((data) => {
@@ -133,16 +134,19 @@ export default {
 
         createAudit: function() {
             this.cleanErrors();
-            if (!this.currentAudit.name)
+            if (!this.currentAudit.name){
                 this.errors.name = "Name required";
-            if (!this.currentAudit.language)
+            }
+            if (!this.currentAudit.language){
                 this.errors.language = "Language required";
-            if (!this.currentAudit.auditType)
+            }
+            if (!this.currentAudit.auditType){
                 this.errors.auditType = "Assessment required";
+            }
                 
-            
-            if (this.errors.name || this.errors.language || this.errors.auditType)
+            if (this.errors.name || this.errors.language || this.errors.auditType){
                 return;
+            }
 
             AuditService.createAudit(this.currentAudit)
             .then((response) => {
@@ -158,6 +162,55 @@ export default {
                 })
             })
         },
+
+        importCreateAudit: function (jsonData) {
+
+            const auditData = jsonData.datas;
+
+            const newAudit = {
+                name: auditData.name,
+                auditType: auditData.auditType,
+                language: auditData.language,
+                template: auditData.template ? auditData.template._id : null,
+                creator: auditData.creator ? auditData.creator._id : null,
+                state: auditData.state,
+                type: auditData.type || "default",
+                date: auditData.date,
+                date_start: auditData.date_start,
+                date_end: auditData.date_end,
+                customFields: auditData.customFields || [],
+                sections: auditData.sections || [],
+                collaborators: auditData.collaborators || [],
+                reviewers: auditData.reviewers || [],
+                sortFindings: auditData.sortFindings || [],
+                scope: auditData.scope || [],
+                findings: auditData.findings || [],
+                client: auditData.client ? auditData.client._id : null,
+                company: auditData.company ? auditData.company._id : null,
+            };
+
+            AuditService.createAudit(newAudit)
+                .then((response) => {
+                    console.log("Audit imported and created successfully:", response.data);
+                    this.$router.push("/audits/" + response.data.datas.audit._id);
+                    Notify.create({
+                        message: 'Audit imported successfully',
+                        color: 'positive',
+                        textColor: 'white',
+                        position: 'top-right'
+                    });
+                })
+                .catch((err) => {
+                    console.error("Error creating audit:", err); 
+                    Notify.create({
+                        message: err.response.data.datas || 'Error creating audit',
+                        color: 'negative',
+                        textColor: 'white',
+                        position: 'top-right'
+                    });
+                });
+        },
+        
 
         deleteAudit: function(uuid) {
             AuditService.deleteAudit(uuid)
@@ -254,6 +307,77 @@ export default {
             })
         },
 
+        exportAudit: function(auditId, format) {
+            var downloadNotif = Notify.create({
+                spinner: QSpinnerGears,
+                message: `Exporting Audit as ${format.toUpperCase()}`,
+                color: "blue",
+                timeout: 0,
+                group: false
+            });
+        
+            AuditService.getAudit(auditId)
+                .then(response => {
+                    if (format === 'json') {
+                        this.downloadJSON(response.data, auditId);
+                    } else if (format === 'zip') {
+                        this.downloadZIP(response.data, auditId);
+                    }
+        
+                    downloadNotif({
+                        icon: 'done',
+                        spinner: false,
+                        message: `Audit successfully exported as ${format.toUpperCase()}`,
+                        color: 'green',
+                        timeout: 2500
+                    });
+                })
+                .catch(async err => {
+                    var message = "Error exporting audit";
+                    if (err.response && err.response.data) {
+                        var blob = new Blob([err.response.data], {type: "application/json"});
+                        var blobData = await this.BlobReader(blob);
+                        message = JSON.parse(blobData).datas;
+                    }
+                    downloadNotif();
+                    Notify.create({
+                        message: message,
+                        type: 'negative',
+                        textColor: 'white',
+                        position: 'top',
+                        closeBtn: true,
+                        timeout: 0,
+                        classes: "text-pre-wrap"
+                    });
+                });
+        },
+        
+        downloadJSON: function(audit, auditId) {
+            var blob = new Blob([JSON.stringify(audit, null, 2)], {type: "application/json"});
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `audit_${auditId}.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        },
+        
+        downloadZIP: function(audit, auditId) {
+            var zip = new JSZip();
+            zip.file(`audit_${auditId}.json`, JSON.stringify(audit, null, 2));
+            
+            zip.generateAsync({type: "blob"}).then(function(content) {
+                var link = document.createElement('a');
+                var url = window.URL.createObjectURL(content);
+                link.href = url;
+                link.download = `audit_${auditId}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                window.URL.revokeObjectURL(url);
+                link.remove();
+            });
+        },
+
         cleanErrors: function() {
             this.errors.name = '';
             this.errors.language = '';
@@ -315,6 +439,43 @@ export default {
 
         dblClick: function(evt, row) {
             this.$router.push('/audits/'+row._id)      
+        },
+
+        triggerFileInput: function() {
+            this.$refs.fileInput.click();
+        },
+
+        //A function responsible for importing the audits from JSON files
+        importAudit(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+        
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+        
+                    console.log("Parsed JSON content: ", jsonData);
+        
+                    // Call the new function to create audit from JSON data
+                    this.importCreateAudit(jsonData);
+        
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                    Notify.create({
+                        message: 'Error reading the JSON file.',
+                        type: 'negative',
+                        textColor: 'white',
+                        position: 'top',
+                        closeBtn: true
+                    });
+                }
+            };
+            reader.readAsText(file);
         }
+        
     }
+
 }
