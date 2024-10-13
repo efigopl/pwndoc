@@ -217,7 +217,7 @@ export default {
                 var creatorId = ""
                 if (this.audit.creator)
                     creatorId = this.audit.creator._id
-                this.collaborators = data.data.datas.filter(e => e._id !== creatorId)
+                this.collaborators = data.data.datas//.filter(e => e._id !== creatorId)
             })
             .catch((err) => {
                 console.log(err)
