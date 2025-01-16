@@ -20,6 +20,7 @@ module.exports = function (ctx) {
     ],
     extras: [
       'material-icons',
+      'material-icons-outlined',
       'material-symbols-outlined',
       'fontawesome-v6',
       'mdi-v7',
@@ -86,6 +87,7 @@ module.exports = function (ctx) {
         'QEditor',
         'QExpansionItem',
         'QField',
+        'QFile',
         'QFooter',
         'QHeader',
         'QIcon',
@@ -96,6 +98,7 @@ module.exports = function (ctx) {
         'QItemSection',
         'QKnob',
         'QLayout',
+        'QLinearProgress',
         'QList',
         'QMenu',
         'QOptionGroup',
@@ -111,6 +114,8 @@ module.exports = function (ctx) {
         'QSelect',
         'QSeparator',
         'QSpace',
+        'QSpinner',
+        'QSpinnerHourglass',
         'QSpinnerGears',
         'QSplitter',
         'QTab',
@@ -137,6 +142,7 @@ module.exports = function (ctx) {
         'Cookies',
         'Dialog',
         'Loading',
+        'LocalStorage',
         'Notify'
       ]
       // iconSet: ctx.theme.mat ? 'material-icons' : 'ionicons'
