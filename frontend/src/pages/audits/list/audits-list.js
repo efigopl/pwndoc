@@ -1,4 +1,5 @@
 import { Dialog, Notify, QSpinnerGears } from 'quasar';
+import YAML from 'js-yaml'
 
 import AuditStateIcon from 'components/audit-state-icon'
 import Breadcrumb from 'components/breadcrumb'
@@ -205,6 +206,29 @@ export default {
                 }
 
                 fileReader.readAsText(data)
+            })
+        },
+
+        exportAudit: function(auditId) {
+            AuditService.exportAudit(auditId)
+            .then((response) => {
+                var data = YAML.dump(response.data.datas);
+                var blob = new Blob([data], {type: 'application/yaml'});
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = "exported.yaml"//response.headers['content-disposition'].split('"')[1];
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+              })
+            .catch((err) => {
+                console.log(err)
+                Notify.create({
+                    message: "Error exporting audit",
+                    color: 'negative',
+                    textColor:'white',
+                    position: 'top-right'
+                })
             })
         },
 

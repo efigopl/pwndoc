@@ -440,6 +440,19 @@ module.exports = function(app, io) {
         });
     });
 
+    // Export audit to .yml
+    app.get("/api/audits/:auditId/export", acl.hasPermission('audits:read'), function(req, res){
+        Audit.exportAudit(req.params.auditId)
+        .then(msg => {
+            console.log(msg)
+            Response.Ok(res, msg)}
+        )
+        .catch(err => {
+            console.log(err)
+            Response.Internal(res, err)
+        })
+    });
+
     // Update sort options of an audit
     app.put("/api/audits/:auditId/sortfindings", acl.hasPermission('audits:update'), async function(req, res) {
         var settings = await Settings.getAll();

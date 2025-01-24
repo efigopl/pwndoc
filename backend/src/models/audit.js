@@ -444,6 +444,19 @@ AuditSchema.statics.delete = (isAdmin, auditId, userId) => {
     })
 }
 
+// Export audit
+AuditSchema.statics.exportAudit = (auditId) => {
+    return new Promise((resolve, reject) => {
+        var audit = Audit.findById(auditId);
+        audit.then((rows) => {
+            resolve(rows);
+        })
+        .catch((err) => {
+            reject(err);
+        })
+    });
+}
+
 // Get audit general information
 AuditSchema.statics.getGeneral = (isAdmin, auditId, userId) => {
     return new Promise((resolve, reject) => { 
