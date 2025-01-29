@@ -31,6 +31,25 @@ ImageSchema.statics.getOne = (imageId) => {
     })
 }
 
+// Get one image
+ImageSchema.statics.getForAudit = async (auditId) => {
+    return new Promise((resolve, reject) => {
+        var query = Image.find({auditId: auditId})
+        
+        query.select('name value')
+        query.exec()
+        .then((row) => {
+            if (row)
+                resolve(row)
+            else 
+                throw({fn: 'NotFound', message: 'Images for this audit not found'});
+        })
+        .catch((err) => {
+            reject(err)
+        })
+    })
+}
+
 // Create image
 ImageSchema.statics.create = (image) => {
     return new Promise((resolve, reject) => {

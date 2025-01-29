@@ -2,6 +2,10 @@ module.exports = function(app, io) {
 
     var Response = require('../lib/httpResponse');
     var Audit = require('mongoose').model('Audit');
+    var User = require('mongoose').model('User');
+    var Client = require('mongoose').model('Client');
+    var Company = require('mongoose').model('Company');
+    var Image = require('mongoose').model('Image');
     var acl = require('../lib/auth').acl;
     var reportGenerator = require('../lib/report-generator');
     var _ = require('lodash');
@@ -443,10 +447,38 @@ module.exports = function(app, io) {
     // Export audit to .yml
     app.get("/api/audits/:auditId/export", acl.hasPermission('audits:read'), function(req, res){
         Audit.exportAudit(req.params.auditId)
-        .then(msg => {
-            console.log(msg)
-            Response.Ok(res, msg)}
-        )
+        .then(async audit => {
+            audit = audit.toObject();
+            var settings = await Settings.getAll();
+
+            if (settings.reviews.enabled && settings.reviews.public.mandatoryReview && audit.state !== 'APPROVED') {
+                Response.Forbidden(res, "Audit was not approved therefore cannot be exported.");
+                return;
+            }
+
+            audit['creator'] = await User.getById(audit['creator']);
+            audit['client'] = await Client.getById(audit['client']);
+            audit['company'] = await Company.getById(audit['company']);
+            audit['images'] = await Image.getForAudit(req.params.auditId);
+            console.log(audit);
+
+            let collaborators = []
+            for (let collaborator of audit['collaborators']) {
+                collaborators.push(await User.getById(collaborator));
+            }
+            audit['collaborators'] = collaborators
+
+            let reviewers = []
+            for (let reviewer of audit['reviewers']) {
+                reviewers.push(await User.getById(reviewer));
+            }
+            audit['reviewers'] = reviewers
+
+            let today = new Date();
+            let date = today.getFullYear() + "-" + ("0" + (today.getMonth() + 1)).slice(-2) + "-" + ("0" + today.getDate()).slice(-2);
+            let name = audit.name.replace(/[\\\/:*?"<>|]/g, "")
+            Response.SendFile(res, `${date}-${name}.yaml`, audit);
+        })
         .catch(err => {
             console.log(err)
             Response.Internal(res, err)

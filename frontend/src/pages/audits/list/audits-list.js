@@ -212,11 +212,11 @@ export default {
         exportAudit: function(auditId) {
             AuditService.exportAudit(auditId)
             .then((response) => {
-                var data = YAML.dump(response.data.datas);
+                var data = YAML.dump(response.data);
                 var blob = new Blob([data], {type: 'application/yaml'});
                 var link = document.createElement('a');
                 link.href = window.URL.createObjectURL(blob);
-                link.download = "exported.yaml"//response.headers['content-disposition'].split('"')[1];
+                link.download = response.headers['content-disposition'].split('"')[1];
                 document.body.appendChild(link);
                 link.click();
                 link.remove();

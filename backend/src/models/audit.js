@@ -447,9 +447,10 @@ AuditSchema.statics.delete = (isAdmin, auditId, userId) => {
 // Export audit
 AuditSchema.statics.exportAudit = (auditId) => {
     return new Promise((resolve, reject) => {
-        var audit = Audit.findById(auditId);
-        audit.then((rows) => {
-            resolve(rows);
+        var query = Audit.findById(auditId);
+        query.select("-_id -__v")
+        query.then((audit) => {
+            resolve(audit);
         })
         .catch((err) => {
             reject(err);

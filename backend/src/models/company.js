@@ -27,6 +27,21 @@ CompanySchema.statics.getAll = () => {
     });
 }
 
+// Get company by Id
+CompanySchema.statics.getById = (id) => {
+    return new Promise((resolve, reject) => {
+        var query = Company.findById(id);
+        query.select('name shortName logo');
+        query.exec()
+        .then((rows) => {
+            resolve(rows);
+        })
+        .catch((err) => {
+            reject(err);
+        })
+    });
+}
+
 // Create company
 CompanySchema.statics.create = (company) => {
     return new Promise((resolve, reject) => {
