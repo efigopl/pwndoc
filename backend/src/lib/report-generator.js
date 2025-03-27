@@ -15,7 +15,7 @@ var translate = require('../translate')
 var $t
 
 // Generate document with docxtemplater
-async function generateDoc(audit) {
+async function generateDoc(audit, parent) {
     var templatePath = `${__basedir}/../report-templates/${audit.template.name}.${audit.template.ext || 'docx'}`
     var content = fs.readFileSync(templatePath, "binary");
     
@@ -25,7 +25,7 @@ async function generateDoc(audit) {
     $t = translate.translate
 
     var settings = await Settings.getAll();
-    var preppedAudit = await prepAuditData(audit, settings)
+    var preppedAudit = await prepAuditData(audit, parent, settings)
 
     var opts = {};
     // opts.centered = true;
@@ -290,7 +290,7 @@ function cvssStrToObject(cvss) {
     return res
 }
 
-async function prepAuditData(data, settings) {
+async function prepAuditData(data, parent, settings) {
     /** CVSS Colors for table cells */
     var noneColor = settings.report.public.cvssColors.noneColor.replace('#', ''); //default of blue ("#4A86E8")
     var lowColor = settings.report.public.cvssColors.lowColor.replace('#', ''); //default of green ("#008000")
@@ -459,6 +459,12 @@ async function prepAuditData(data, settings) {
         result.creator.role = data.creator.role || "undefined"
     }
 
+    if (parent) {
+        let section = parent.sections.find(section => section.field === "executiveSummary");
+        section.field = "parentExecutiveSummary";
+        data.sections.push(section);
+    }
+
     for (var section of data.sections) {
         var formatSection = { 
             name: $t(section.name)
@@ -477,6 +483,7 @@ async function prepAuditData(data, settings) {
         }
         result[section.field] = formatSection
     }
+
     replaceSubTemplating(result)
     return result
 }
