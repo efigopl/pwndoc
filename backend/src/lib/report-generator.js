@@ -25,7 +25,9 @@ async function generateDoc(audit, parent) {
     $t = translate.translate
 
     var settings = await Settings.getAll();
-    var preppedAudit = await prepAuditData(audit, parent, settings)
+    var preppedParentAudit = await prepAuditData(parent, settings)
+    var preppedAudit = await prepAuditData(audit, settings)
+    preppedAudit.parent = preppedParentAudit;
 
     var opts = {};
     // opts.centered = true;
@@ -290,7 +292,7 @@ function cvssStrToObject(cvss) {
     return res
 }
 
-async function prepAuditData(data, parent, settings) {
+async function prepAuditData(data, settings) {
     /** CVSS Colors for table cells */
     var noneColor = settings.report.public.cvssColors.noneColor.replace('#', ''); //default of blue ("#4A86E8")
     var lowColor = settings.report.public.cvssColors.lowColor.replace('#', ''); //default of green ("#008000")
@@ -457,12 +459,6 @@ async function prepAuditData(data, parent, settings) {
         result.creator.email = data.creator.email || "undefined"
         result.creator.phone = data.creator.phone || "undefined"
         result.creator.role = data.creator.role || "undefined"
-    }
-
-    if (parent) {
-        let section = parent.sections.find(section => section.field === "executiveSummary");
-        section.field = "parentExecutiveSummary";
-        data.sections.push(section);
     }
 
     for (var section of data.sections) {
