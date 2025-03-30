@@ -25,9 +25,10 @@ async function generateDoc(audit, parent) {
     $t = translate.translate
 
     var settings = await Settings.getAll();
-    var preppedParentAudit = await prepAuditData(parent, settings)
     var preppedAudit = await prepAuditData(audit, settings)
-    preppedAudit.parent = preppedParentAudit;
+    if (parent) {
+        preppedAudit.parent = await prepAuditData(parent, settings);
+    }
 
     var opts = {};
     // opts.centered = true;
