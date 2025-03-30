@@ -15,7 +15,7 @@ var translate = require('../translate')
 var $t
 
 // Generate document with docxtemplater
-async function generateDoc(audit) {
+async function generateDoc(audit, parent) {
     var templatePath = `${__basedir}/../report-templates/${audit.template.name}.${audit.template.ext || 'docx'}`
     var content = fs.readFileSync(templatePath, "binary");
     
@@ -26,6 +26,9 @@ async function generateDoc(audit) {
 
     var settings = await Settings.getAll();
     var preppedAudit = await prepAuditData(audit, settings)
+    if (parent) {
+        preppedAudit.parent = await prepAuditData(parent, settings);
+    }
 
     var opts = {};
     // opts.centered = true;
@@ -477,6 +480,7 @@ async function prepAuditData(data, settings) {
         }
         result[section.field] = formatSection
     }
+
     replaceSubTemplating(result)
     return result
 }

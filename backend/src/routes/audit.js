@@ -417,7 +417,8 @@ module.exports = function(app, io) {
 
     // Generate Report for specific audit
     app.get("/api/audits/:auditId/generate", acl.hasPermission('audits:read'), function(req, res){
-        Audit.getAudit(acl.isAllowed(req.decodedToken.role, 'audits:read-all'), req.params.auditId, req.decodedToken.id)
+        let isAdmin = acl.isAllowed(req.decodedToken.role, 'audits:read-all');
+        Audit.getAudit(isAdmin, req.params.auditId, req.decodedToken.id)
         .then(async audit => {
             var settings = await Settings.getAll();
 
@@ -429,7 +430,11 @@ module.exports = function(app, io) {
             if (!audit.template)
                 throw ({fn: 'BadParameters', message: 'Template not defined'})
 
-            var reportDoc = await reportGenerator.generateDoc(audit);
+            let parent = null;
+            if (audit.parentId) 
+                parent = await Audit.getAudit(isAdmin, audit.parentId, req.decodedToken.id);
+
+            var reportDoc = await reportGenerator.generateDoc(audit, parent);
             Response.SendFile(res, `${audit.name.replace(/[\\\/:*?"<>|]/g, "")}.${audit.template.ext || 'docx'}`, reportDoc);
         })
         .catch(err => {
