@@ -307,6 +307,16 @@ async function prepAuditData(data, settings) {
     var cellHighColor = '<w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="'+highColor+'"/></w:tcPr>';
     var cellCriticalColor = '<w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="'+criticalColor+'"/></w:tcPr>';
 
+    var okColor = settings.report.public.retestColors.okColor.replace('#', '');
+    var koColor = settings.report.public.retestColors.koColor.replace('#', '');
+    var unknownColor = settings.report.public.retestColors.unknownColor.replace('#', '');
+    var partialColor = settings.report.public.retestColors.partialColor.replace('#', '');
+
+    var cellOkColor = '<w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="' + okColor + '"/></w:tcPr>';
+    var cellKoColor = '<w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="'+koColor+'"/></w:tcPr>';
+    var cellUnknownColor = '<w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="'+unknownColor+'"/></w:tcPr>';
+    var cellPartialColor = '<w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="'+partialColor+'"/></w:tcPr>';
+
     var result = {}
     result.name = data.name || "undefined"
     result.auditType = $t(data.auditType) || "undefined"
@@ -424,6 +434,12 @@ async function prepAuditData(data, settings) {
         else tmpFinding.cvss.environmentalCellColor = cellNoneColor
 
         tmpFinding.cvssObj = cvssStrToObject(tmpCVSS.vectorString)
+
+        if (tmpFinding.retestStatus === "ok") tmpFinding.retestColor = cellOkColor
+        else if (tmpFinding.retestStatus === "ko") tmpFinding.retestColor = cellKoColor
+        else if (tmpFinding.retestStatus === "unknown") tmpFinding.retestColor = cellUnknownColor
+        else if (tmpFinding.retestStatus === "partial") tmpFinding.retestColor = cellPartialColor
+        else tmpFinding.cvss.cellColor = cellNoneColor
 
         if (finding.customFields) {
             for (field of finding.customFields) {
