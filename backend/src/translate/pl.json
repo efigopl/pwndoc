@@ -24,6 +24,11 @@
     "Critical_S": "Krytyczne",
     "_S": "Brak",
 
+    "Retest_ok": "Usunięto",
+    "Retest_ko": "Nie usunięto",
+    "Retest_partial": "Częściowo usunięto",
+    "Retest_unknown": "Nie można ustalić",
+
     "Network_AV": "Przez sieć",
     "Adjacent Network_AV": "Przez sieć przylegającą",
     "Local_AV": "Przez dostęp lokalny",
