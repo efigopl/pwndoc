@@ -42,6 +42,7 @@ export default {
     tooltip: {
         usersConnected: 'Users on the Audit:',
         editAudit: 'Edit Audit',
+        exportAudit: 'Export Audit',
         downloadReport: 'Download Report',
         deleteAudit: 'Delete Audit',
         removeAudit: 'Remove Audit (Audit will not be deleted)',
@@ -328,6 +329,10 @@ export default {
     usersConnected: 'Users Connected',
     awaitingMyReview: 'Awaiting my review',
     newAudit: 'New Audit',
+    importAudits: 'Import Audits',
+    importAuditsOk: 'All <strong>{0}</strong> audits imported',
+    importAuditsAllExists: 'All <strong>{0}</strong> audits title already exist',
+    importAuditsPartial: '<strong>{0}</strong> audits created<br /><strong>{1}</strong> audits title already exist',
     search: 'Search',
     users: 'Users',
     auditNum1: 'Audit',

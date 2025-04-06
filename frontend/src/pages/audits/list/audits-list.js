@@ -132,6 +132,83 @@ export default {
             })
         },
 
+        importAudits: function(files) {
+            this.importedAudits = [];
+            var pending = 0;
+            for (var i=0; i<files.length; i++) {
+                ((file) => {
+                    var fileReader = new FileReader();
+                    fileReader.onloadend = (e) => {
+                        var auditFile;
+                        var ext = file.name.split('.').pop();
+                        if (ext === "yml" || ext === "yaml") {
+                            try {
+                                auditFile = YAML.load(fileReader.result);
+                                if (typeof auditFile === 'object') {
+                                    this.importedAudits = auditFile;
+                                }
+                                else
+                                    throw new Error ($t('invalidYamlFormat'))
+                            }
+                            catch(err) {
+                                console.log(err);
+                                var errMsg = err;
+                                if (err.mark) errMsg = $t('err.parsingError2',[err.mark.line,err.mark.column]);                              
+                                Notify.create({
+                                    message: errMsg,
+                                    color: 'negative',
+                                    textColor: 'white',
+                                    position: 'top-right'
+                                })
+                                return;
+                            }
+                        }
+                        else
+                            console.log('Bad Extension')
+                        pending--;
+                        if (pending === 0) this.createAudits();
+                    }
+                    pending++;
+                    fileReader.readAsText(file);
+                })(files[i])
+            }
+        },
+
+        createAudits: function() {
+            AuditService.createAudits(this.importedAudits)
+            .then((data) => {
+                var message = "";
+                var color = "positive";
+                if (data.data.datas.duplicates === 0) {
+                    message = $t('importAuditsOk',[data.data.datas.created]);
+                }
+                else if (data.data.datas.created === 0 && data.data.datas.duplicates > 0) {
+                    message = $t('importAuditsAllExists',[data.data.datas.duplicates.length]);
+                    color = "negative";
+                }
+                else {
+                    message = $t('importAuditsPartial',[data.data.datas.created,data.data.datas.duplicates.length]);
+                    color = "orange";
+                }
+                Notify.create({
+                    message: message,
+                    html: true,
+                    closeBtn: 'x',
+                    color: color,
+                    textColor:'white',
+                    position: 'top-right'
+                })
+            })
+            .catch((err) => {
+                Notify.create({
+                    message: err.response.data.datas,
+                    color: 'negative',
+                    textColor: 'white',
+                    position: 'top-right'
+                })
+            })
+        },
+
         createAudit: function() {
             this.cleanErrors();
             if (!this.currentAudit.name)

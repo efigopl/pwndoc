@@ -444,7 +444,7 @@ module.exports = function(app, io) {
         });
     });
 
-    // Export audit to .yml
+    // Export audit to YAML
     app.get("/api/audits/:auditId/export", acl.hasPermission('audits:read'), function(req, res){
         Audit.exportAudit(req.params.auditId)
         .then(async audit => {
@@ -483,6 +483,34 @@ module.exports = function(app, io) {
             console.log(err)
             Response.Internal(res, err)
         })
+    });
+
+    // Import audit from previously exported YAML
+    app.post("/api/audits/import", acl.hasPermission('audits:create'), function(req, res) {
+        if (!req.body.name || !req.body.language || !req.body.auditType) {
+            Response.BadParameters(res, 'Missing some required parameters: name, language, auditType');
+            return;
+        }
+
+        if (!utils.validFilename(req.body.language)) {
+            Response.BadParameters(res, 'Invalid characters for language');
+            return;
+        }
+
+        var audit = {};
+        // Required params
+        audit.name = req.body.name;
+        audit.language = req.body.language;
+        audit.auditType = req.body.auditType;
+        audit.type = 'default';
+
+        // Optional params
+        if (req.body.type && req.body.type === 'multi') audit.type = req.body.type;
+        if (audit.type === 'default' && req.body.parentId) audit.parentId = req.body.parentId; 
+
+        Audit.create(audit, req.decodedToken.id)
+        .then(inserted => Response.Created(res, {message: 'Audit created successfully', audit: inserted}))
+        .catch(err => Response.Internal(res, err))
     });
 
     // Update sort options of an audit

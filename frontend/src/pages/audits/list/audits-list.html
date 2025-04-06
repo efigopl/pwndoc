@@ -40,6 +40,23 @@
                 <q-toggle v-if="UserService.isAllowed('audits:users-connected')" :label="$t('usersConnected')" v-model="displayConnected" />
                 <q-toggle v-if="$settings.reviews.enabled && (UserService.isAllowed('audits:review') || UserService.isAllowed('audits:review-all'))" :label="$t('awaitingMyReview')" v-model="displayReadyForReview" />
                 <q-space />
+                <input
+                ref="importAudits"
+                value=""
+                type="file"
+                multiple
+                accept=".yml, .yaml"
+                class="hidden"
+                @change="importAudits($event.target.files)"
+                />
+                <q-btn 
+                :label="$t('importAudits')"
+                color="warning"
+                unelevated
+                class="q-mr-sm text-black"
+                no-caps
+                @click="$refs.importAudits.click()"
+                />
                 <q-btn 
                 color="secondary"
                 unelevated
