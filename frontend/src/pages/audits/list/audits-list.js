@@ -132,63 +132,49 @@ export default {
             })
         },
 
-        importAudits: function(files) {
-            this.importedAudits = [];
-            var pending = 0;
-            for (var i=0; i<files.length; i++) {
-                ((file) => {
-                    var fileReader = new FileReader();
-                    fileReader.onloadend = (e) => {
-                        var auditFile;
-                        var ext = file.name.split('.').pop();
-                        if (ext === "yml" || ext === "yaml") {
-                            try {
-                                auditFile = YAML.load(fileReader.result);
-                                if (typeof auditFile === 'object') {
-                                    this.importedAudits = auditFile;
-                                }
-                                else
-                                    throw new Error ($t('invalidYamlFormat'))
-                            }
-                            catch(err) {
-                                console.log(err);
-                                var errMsg = err;
-                                if (err.mark) errMsg = $t('err.parsingError2',[err.mark.line,err.mark.column]);                              
-                                Notify.create({
-                                    message: errMsg,
-                                    color: 'negative',
-                                    textColor: 'white',
-                                    position: 'top-right'
-                                })
-                                return;
-                            }
-                        }
-                        else
-                            console.log('Bad Extension')
-                        pending--;
-                        if (pending === 0) this.createAudits();
+        importAudit: function(files) {
+            let file = files[0];
+
+            var fileReader = new FileReader();
+            fileReader.onloadend = (_) => {
+                var auditFile;
+                var ext = file.name.split('.').pop();
+                if (!(ext === "yml" || ext === "yaml")) {
+                    console.log('Bad Extension')
+                    return;
+                }
+
+                try {
+                    auditFile = YAML.load(fileReader.result);
+                    if (typeof auditFile === 'object') {
+                        this.sendImportedAudit(auditFile)
                     }
-                    pending++;
-                    fileReader.readAsText(file);
-                })(files[i])
+                    else
+                        throw new Error ($t('invalidYamlFormat'))
+                }
+                catch(err) {
+                    console.log(err);
+                    var errMsg = err;
+                    if (err.mark) errMsg = $t('err.parsingError2',[err.mark.line,err.mark.column]);                              
+                    Notify.create({
+                        message: errMsg,
+                        color: 'negative',
+                        textColor: 'white',
+                        position: 'top-right'
+                    })
+                    return;
+                }
             }
+            fileReader.readAsText(file);
         },
 
-        createAudits: function() {
-            AuditService.createAudits(this.importedAudits)
+        sendImportedAudit: function(importedAudit) {
+            AuditService.importAudit(importedAudit)
             .then((data) => {
                 var message = "";
                 var color = "positive";
                 if (data.data.datas.duplicates === 0) {
-                    message = $t('importAuditsOk',[data.data.datas.created]);
-                }
-                else if (data.data.datas.created === 0 && data.data.datas.duplicates > 0) {
-                    message = $t('importAuditsAllExists',[data.data.datas.duplicates.length]);
-                    color = "negative";
-                }
-                else {
-                    message = $t('importAuditsPartial',[data.data.datas.created,data.data.datas.duplicates.length]);
-                    color = "orange";
+                    message = $t('importAuditOk',[data.data.datas.created]);
                 }
                 Notify.create({
                     message: message,

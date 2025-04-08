@@ -41,21 +41,20 @@
                 <q-toggle v-if="$settings.reviews.enabled && (UserService.isAllowed('audits:review') || UserService.isAllowed('audits:review-all'))" :label="$t('awaitingMyReview')" v-model="displayReadyForReview" />
                 <q-space />
                 <input
-                ref="importAudits"
+                ref="importAudit"
                 value=""
                 type="file"
-                multiple
                 accept=".yml, .yaml"
                 class="hidden"
-                @change="importAudits($event.target.files)"
+                @change="importAudit($event.target.files)"
                 />
                 <q-btn 
-                :label="$t('importAudits')"
+                :label="$t('importAudit')"
                 color="warning"
                 unelevated
                 class="q-mr-sm text-black"
                 no-caps
-                @click="$refs.importAudits.click()"
+                @click="$refs.importAudit.click()"
                 />
                 <q-btn 
                 color="secondary"
