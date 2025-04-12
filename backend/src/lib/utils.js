@@ -52,3 +52,16 @@ function getSockets(io, room) {
   return result
 }
 exports.getSockets = getSockets
+
+function replaceImageId(text, oldId, newId) {
+    if (!text || !oldId || !newId) {
+        return ""
+    }
+
+    let regex = new RegExp(`<img\\s+[^>]*src=["']${oldId}["'][^>]*>`, 'g');
+    return text.replace(regex, match => {
+        return match.replace(oldId, newId)
+    })
+}
+
+exports.replaceImageId = replaceImageId

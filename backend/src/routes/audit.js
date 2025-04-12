@@ -460,7 +460,6 @@ module.exports = function(app, io) {
             audit['client'] = await Client.getById(audit['client']);
             audit['company'] = await Company.getById(audit['company']);
             audit['images'] = await Image.getForAudit(req.params.auditId);
-            console.log(audit);
 
             let collaborators = []
             for (let collaborator of audit['collaborators']) {
@@ -474,6 +473,15 @@ module.exports = function(app, io) {
             }
             audit['reviewers'] = reviewers
 
+            audit.findings.forEach(finding => {
+                delete finding["_id"]
+            });
+            audit.sections.forEach(section => {
+                delete section["_id"]
+                section.customFields.forEach(field => {
+                    delete field["_id"]
+                })
+            });
             let today = new Date();
             let date = today.getFullYear() + "-" + ("0" + (today.getMonth() + 1)).slice(-2) + "-" + ("0" + today.getDate()).slice(-2);
             let name = audit.name.replace(/[\\\/:*?"<>|]/g, "")
@@ -486,31 +494,49 @@ module.exports = function(app, io) {
     });
 
     // Import audit from previously exported YAML
-    app.post("/api/audits/import", acl.hasPermission('audits:create'), function(req, res) {
-        if (!req.body.name || !req.body.language || !req.body.auditType) {
-            Response.BadParameters(res, 'Missing some required parameters: name, language, auditType');
-            return;
+    app.post("/api/audits/import", acl.hasPermission('audits:create'), async function(req, res) {
+        let audit = req.body;
+        if (audit.company) {
+            await Company.getById(audit.company._id).catch(_ => {
+                delete audit.company;
+            });
         }
 
-        if (!utils.validFilename(req.body.language)) {
-            Response.BadParameters(res, 'Invalid characters for language');
-            return;
+        await User.getById(audit.creator._id).catch(async _ => {
+            audit.creator = await User.getById(req.decodedToken.id);
+        });
+        for (let i = audit.collaborators.length - 1; i >= 0; i--) {
+            let collab = audit.collaborators[i];
+
+            await User.getById(collab._id).catch(_ => {
+                audit.collaborators.splice(i, 1);
+            });
         }
 
-        var audit = {};
-        // Required params
-        audit.name = req.body.name;
-        audit.language = req.body.language;
-        audit.auditType = req.body.auditType;
-        audit.type = 'default';
+        for (let i = 0; i < audit.images.length; i++) {
+            let image = audit.images[i]
 
-        // Optional params
-        if (req.body.type && req.body.type === 'multi') audit.type = req.body.type;
-        if (audit.type === 'default' && req.body.parentId) audit.parentId = req.body.parentId; 
+            let oldId = image._id;
+            delete image._id;
+            let newId = await Image.create(image);
+            newId = newId._id;
 
-        Audit.create(audit, req.decodedToken.id)
-        .then(inserted => Response.Created(res, {message: 'Audit created successfully', audit: inserted}))
-        .catch(err => Response.Internal(res, err))
+            if (oldId == newId) {
+                return
+            }
+
+            audit.findings.forEach(finding => {
+                finding.description = utils.replaceImageId(finding.description, oldId, newId)
+                finding.observation = utils.replaceImageId(finding.observation, oldId, newId)
+                finding.poc = utils.replaceImageId(finding.poc, oldId, newId)
+                finding.scope = utils.replaceImageId(finding.scope, oldId, newId)
+                finding.remediation = utils.replaceImageId(finding.remediation, oldId, newId)
+            })
+        }
+
+        Audit.importAudit(audit)
+            .then(msg => Response.Created(res, msg))
+            .catch(msg => Response.Internal(res, msg))
     });
 
     // Update sort options of an audit

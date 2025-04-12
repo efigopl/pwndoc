@@ -458,6 +458,21 @@ AuditSchema.statics.exportAudit = (auditId) => {
     });
 }
 
+AuditSchema.statics.importAudit = (audit) => {
+    return new Promise((resolve, reject) => {
+        Audit(audit).save()
+        .then((rows) => {
+            resolve(rows)
+        })
+        .catch((err) => {
+            if (err.name === "ValidationError")
+                reject({fn: 'BadParameters', message: 'Audit validation failed'})
+            else
+                reject(err)
+        })
+    });
+}
+
 // Get audit general information
 AuditSchema.statics.getGeneral = (isAdmin, auditId, userId) => {
     return new Promise((resolve, reject) => { 

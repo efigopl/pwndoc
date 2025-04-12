@@ -173,9 +173,7 @@ export default {
             .then((data) => {
                 var message = "";
                 var color = "positive";
-                if (data.data.datas.duplicates === 0) {
-                    message = $t('importAuditOk',[data.data.datas.created]);
-                }
+                message = $t('importAuditOk',[data.data.datas.created]);
                 Notify.create({
                     message: message,
                     html: true,
