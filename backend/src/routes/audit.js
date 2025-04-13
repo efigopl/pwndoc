@@ -2,6 +2,10 @@ module.exports = function(app, io) {
 
     var Response = require('../lib/httpResponse');
     var Audit = require('mongoose').model('Audit');
+    var User = require('mongoose').model('User');
+    var Client = require('mongoose').model('Client');
+    var Company = require('mongoose').model('Company');
+    var Image = require('mongoose').model('Image');
     var acl = require('../lib/auth').acl;
     var reportGenerator = require('../lib/report-generator');
     var _ = require('lodash');
@@ -443,6 +447,101 @@ module.exports = function(app, io) {
             else
                 Response.Internal(res, err)
         });
+    });
+
+    // Export audit to YAML
+    app.get("/api/audits/:auditId/export", acl.hasPermission('audits:read'), function(req, res){
+        Audit.exportAudit(req.params.auditId)
+        .then(async audit => {
+            audit = audit.toObject();
+            var settings = await Settings.getAll();
+
+            if (settings.reviews.enabled && settings.reviews.public.mandatoryReview && audit.state !== 'APPROVED') {
+                Response.Forbidden(res, "Audit was not approved therefore cannot be exported.");
+                return;
+            }
+
+            audit['creator'] = await User.getById(audit['creator']);
+            audit['client'] = await Client.getById(audit['client']);
+            audit['company'] = await Company.getById(audit['company']);
+            audit['images'] = await Image.getForAudit(req.params.auditId);
+
+            let collaborators = []
+            for (let collaborator of audit['collaborators']) {
+                collaborators.push(await User.getById(collaborator));
+            }
+            audit['collaborators'] = collaborators
+
+            let reviewers = []
+            for (let reviewer of audit['reviewers']) {
+                reviewers.push(await User.getById(reviewer));
+            }
+            audit['reviewers'] = reviewers
+
+            audit.findings.forEach(finding => {
+                delete finding["_id"]
+            });
+            audit.sections.forEach(section => {
+                delete section["_id"]
+                section.customFields.forEach(field => {
+                    delete field["_id"]
+                })
+            });
+            let today = new Date();
+            let date = today.getFullYear() + "-" + ("0" + (today.getMonth() + 1)).slice(-2) + "-" + ("0" + today.getDate()).slice(-2);
+            let name = audit.name.replace(/[\\\/:*?"<>|]/g, "")
+            Response.SendFile(res, `${date}-${name}.yaml`, audit);
+        })
+        .catch(err => {
+            console.log(err)
+            Response.Internal(res, err)
+        })
+    });
+
+    // Import audit from previously exported YAML
+    app.post("/api/audits/import", acl.hasPermission('audits:create'), async function(req, res) {
+        let audit = req.body;
+        if (audit.company) {
+            await Company.getById(audit.company._id).catch(_ => {
+                delete audit.company;
+            });
+        }
+
+        await User.getById(audit.creator._id).catch(async _ => {
+            audit.creator = await User.getById(req.decodedToken.id);
+        });
+        for (let i = audit.collaborators.length - 1; i >= 0; i--) {
+            let collab = audit.collaborators[i];
+
+            await User.getById(collab._id).catch(_ => {
+                audit.collaborators.splice(i, 1);
+            });
+        }
+
+        for (let i = 0; i < audit.images.length; i++) {
+            let image = audit.images[i]
+
+            let oldId = image._id;
+            delete image._id;
+            let newId = await Image.create(image);
+            newId = newId._id;
+
+            if (oldId == newId) {
+                return
+            }
+
+            audit.findings.forEach(finding => {
+                finding.description = utils.replaceImageId(finding.description, oldId, newId)
+                finding.observation = utils.replaceImageId(finding.observation, oldId, newId)
+                finding.poc = utils.replaceImageId(finding.poc, oldId, newId)
+                finding.scope = utils.replaceImageId(finding.scope, oldId, newId)
+                finding.remediation = utils.replaceImageId(finding.remediation, oldId, newId)
+            })
+        }
+
+        Audit.importAudit(audit)
+            .then(msg => Response.Created(res, msg))
+            .catch(msg => Response.Internal(res, msg))
     });
 
     // Update sort options of an audit

@@ -40,6 +40,22 @@
                 <q-toggle v-if="UserService.isAllowed('audits:users-connected')" :label="$t('usersConnected')" v-model="displayConnected" />
                 <q-toggle v-if="$settings.reviews.enabled && (UserService.isAllowed('audits:review') || UserService.isAllowed('audits:review-all'))" :label="$t('awaitingMyReview')" v-model="displayReadyForReview" />
                 <q-space />
+                <input
+                ref="importAudit"
+                value=""
+                type="file"
+                accept=".yml, .yaml"
+                class="hidden"
+                @change="importAudit($event.target.files)"
+                />
+                <q-btn 
+                :label="$t('importAudit')"
+                color="warning"
+                unelevated
+                class="q-mr-sm text-black"
+                no-caps
+                @click="$refs.importAudit.click()"
+                />
                 <q-btn 
                 color="secondary"
                 unelevated
@@ -139,6 +155,9 @@
             <q-td slot="body-cell-action" slot-scope="props" style="width:1px">
                 <q-btn size="sm" flat color="primary" :to="'/audits/'+props.row._id" icon="fa fa-edit">
 					<q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">{{$t('tooltip.editAudit')}}</q-tooltip> 
+                </q-btn>
+                <q-btn size="sm" flat color="warning" @click="exportAudit(props.row._id)" icon="fa fa-file-zipper">
+					<q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">{{$t('tooltip.exportAudit')}}</q-tooltip> 
                 </q-btn>
                 <q-btn size="sm" flat color="info" @click="generateReport(props.row._id)" icon="fa fa-download">
 					<q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">{{$t('tooltip.downloadReport')}}</q-tooltip> 

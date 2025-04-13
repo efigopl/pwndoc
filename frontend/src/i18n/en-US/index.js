@@ -42,6 +42,7 @@ export default {
     tooltip: {
         usersConnected: 'Users on the Audit:',
         editAudit: 'Edit Audit',
+        exportAudit: 'Export Audit',
         downloadReport: 'Download Report',
         deleteAudit: 'Delete Audit',
         removeAudit: 'Remove Audit (Audit will not be deleted)',
@@ -328,6 +329,8 @@ export default {
     usersConnected: 'Users Connected',
     awaitingMyReview: 'Awaiting my review',
     newAudit: 'New Audit',
+    importAudit: 'Import Audit',
+    importAuditOk: 'Audit succesfully imported',
     search: 'Search',
     users: 'Users',
     auditNum1: 'Audit',

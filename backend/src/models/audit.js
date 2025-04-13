@@ -444,6 +444,35 @@ AuditSchema.statics.delete = (isAdmin, auditId, userId) => {
     })
 }
 
+// Export audit
+AuditSchema.statics.exportAudit = (auditId) => {
+    return new Promise((resolve, reject) => {
+        var query = Audit.findById(auditId);
+        query.select("-_id -__v")
+        query.then((audit) => {
+            resolve(audit);
+        })
+        .catch((err) => {
+            reject(err);
+        })
+    });
+}
+
+AuditSchema.statics.importAudit = (audit) => {
+    return new Promise((resolve, reject) => {
+        Audit(audit).save()
+        .then((rows) => {
+            resolve(rows)
+        })
+        .catch((err) => {
+            if (err.name === "ValidationError")
+                reject({fn: 'BadParameters', message: 'Audit validation failed'})
+            else
+                reject(err)
+        })
+    });
+}
+
 // Get audit general information
 AuditSchema.statics.getGeneral = (isAdmin, auditId, userId) => {
     return new Promise((resolve, reject) => { 

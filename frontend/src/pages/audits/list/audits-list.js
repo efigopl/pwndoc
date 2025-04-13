@@ -1,4 +1,5 @@
 import { Dialog, Notify, QSpinnerGears } from 'quasar';
+import YAML from 'js-yaml'
 
 import AuditStateIcon from 'components/audit-state-icon'
 import Breadcrumb from 'components/breadcrumb'
@@ -131,6 +132,67 @@ export default {
             })
         },
 
+        importAudit: function(files) {
+            let file = files[0];
+
+            var fileReader = new FileReader();
+            fileReader.onloadend = (_) => {
+                var auditFile;
+                var ext = file.name.split('.').pop();
+                if (!(ext === "yml" || ext === "yaml")) {
+                    console.log('Bad Extension')
+                    return;
+                }
+
+                try {
+                    auditFile = YAML.load(fileReader.result);
+                    if (typeof auditFile === 'object') {
+                        this.sendImportedAudit(auditFile)
+                    }
+                    else
+                        throw new Error ($t('invalidYamlFormat'))
+                }
+                catch(err) {
+                    console.log(err);
+                    var errMsg = err;
+                    if (err.mark) errMsg = $t('err.parsingError2',[err.mark.line,err.mark.column]);                              
+                    Notify.create({
+                        message: errMsg,
+                        color: 'negative',
+                        textColor: 'white',
+                        position: 'top-right'
+                    })
+                    return;
+                }
+            }
+            fileReader.readAsText(file);
+        },
+
+        sendImportedAudit: function(importedAudit) {
+            AuditService.importAudit(importedAudit)
+            .then((data) => {
+                var message = "";
+                var color = "positive";
+                message = $t('importAuditOk',[data.data.datas.created]);
+                Notify.create({
+                    message: message,
+                    html: true,
+                    closeBtn: 'x',
+                    color: color,
+                    textColor:'white',
+                    position: 'top-right'
+                })
+            })
+            .catch((err) => {
+                Notify.create({
+                    message: err.response.data.datas,
+                    color: 'negative',
+                    textColor: 'white',
+                    position: 'top-right'
+                })
+            })
+        },
+
         createAudit: function() {
             this.cleanErrors();
             if (!this.currentAudit.name)
@@ -205,6 +267,29 @@ export default {
                 }
 
                 fileReader.readAsText(data)
+            })
+        },
+
+        exportAudit: function(auditId) {
+            AuditService.exportAudit(auditId)
+            .then((response) => {
+                var data = YAML.dump(response.data);
+                var blob = new Blob([data], {type: 'application/yaml'});
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = response.headers['content-disposition'].split('"')[1];
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+              })
+            .catch((err) => {
+                console.log(err)
+                Notify.create({
+                    message: "Error exporting audit",
+                    color: 'negative',
+                    textColor:'white',
+                    position: 'top-right'
+                })
             })
         },
 

@@ -31,6 +31,21 @@ ClientSchema.statics.getAll = () => {
     });
 }
 
+// Get client by Id
+ClientSchema.statics.getById = (id) => {
+    return new Promise((resolve, reject) => {
+        var query = Client.findById(id).populate('company', '-_id name');
+        query.select('email lastname firstname phone cell title');
+        query.exec()
+        .then((rows) => {
+            resolve(rows);
+        })
+        .catch((err) => {
+            reject(err);
+        })
+    });
+}
+
 // Create client
 ClientSchema.statics.create = (client, company) => {
     return new Promise(async(resolve, reject) => {

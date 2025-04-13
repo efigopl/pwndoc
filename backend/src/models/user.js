@@ -95,6 +95,24 @@ UserSchema.statics.getAll = function () {
     });
 }
 
+// Get one user by id
+UserSchema.statics.getById = async function (id) {
+    return new Promise((resolve, reject) => {
+        var query = this.findById(id)
+        query.select('username firstname lastname email phone role totpEnabled enabled');
+        query.exec()
+        .then(function(row) {
+            if (row)
+                resolve(row);
+            else
+                throw({fn: 'NotFound', message: 'User not found'});
+        })
+        .catch(function(err) {
+            reject(err);
+        })
+    });
+}
+
 // Get one user by its username
 UserSchema.statics.getByUsername = function (username) {
     return new Promise((resolve, reject) => {
