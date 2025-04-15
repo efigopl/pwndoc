@@ -439,7 +439,7 @@ async function prepAuditData(data, settings) {
         else if (tmpFinding.retestStatus === "ko") tmpFinding.retestColor = cellKoColor
         else if (tmpFinding.retestStatus === "unknown") tmpFinding.retestColor = cellUnknownColor
         else if (tmpFinding.retestStatus === "partial") tmpFinding.retestColor = cellPartialColor
-        else tmpFinding.cvss.cellColor = cellNoneColor
+        else tmpFinding.retestColor = cellNoneColor
 
         if (finding.customFields) {
             for (field of finding.customFields) {
