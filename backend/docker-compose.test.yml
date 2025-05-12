@@ -15,6 +15,7 @@ services:
     restart: always
     environment:
       - MONGO_DB:pwndoc
+    network_mode: host
 
   backend-test:
     image: yeln4ts/pwndoc:backend-test
@@ -25,12 +26,14 @@ services:
     environment:
       - DB_SERVER=mongo-pwndoc-test
       - DB_NAME=pwndoc
+      - API_URL=https://localhost:4242
     volumes:
       - ./tests:/app/tests
       - ./src:/app/src
       - ./jest.config.js:/app/jest.config.js
     depends_on:
       - mongodb-test
+    network_mode: host
 
 volumes:
   mongo-data-test:
