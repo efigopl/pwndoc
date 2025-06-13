@@ -42,8 +42,7 @@ module.exports = function (ctx) {
       env: ctx.dev
         ? { // dev environnment
           API_PORT: 5252
-        }
-        : { // prod environnment (build)
+        } : { // prod environnment (build)
           API_PORT: 443,
         }
     },
@@ -56,7 +55,12 @@ module.exports = function (ctx) {
       port: 8081,
       proxy: {
         '/api': {
-          target: 'https://pwndoc-backend:5252',
+          target: `https://pwndoc-backend-dev:4242`,
+          changeOrigin: true,
+          secure: false
+        },
+        '/socket.io': {
+          target: `https://pwndoc-backend-dev:4242`,
           changeOrigin: true,
           secure: false
         }

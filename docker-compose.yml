@@ -25,9 +25,13 @@ services:
     build: ./backend
     image: efigo/pwndoc:backend
     container_name: pwndoc-backend
+    environment:
+      - DB_SERVER=mongo-pwndoc
+      - DB_NAME=pwndoc
     volumes:
       - ./backend/report-templates:/app/report-templates
       - ./backend/src/config:/app/src/config
+      - ./backend/src/lib/custom:/app/src/lib/custom
       - ./backend/backup:/app/backup
     depends_on:
       - mongodb
