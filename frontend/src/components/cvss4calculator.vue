@@ -10,6 +10,15 @@
             </span>
             </div>
             <q-space />
+            <q-btn 
+            label="Clear"
+            color="grey"
+            unelevated
+            class="q-mr-sm text-white"
+            no-caps
+            @click="clearCalculator()"
+            />
+            <div style="width: 120px;"></div>
             <div class="scoreRating" :class="cvss4.baseSeverity">
                 <div v-if="cvss4.baseScore >= 0">
                     <span class="baseMetricScore">{{cvss4.baseScore.toFixed(1)}}</span>
@@ -1348,7 +1357,10 @@ export default {
         },
         cvss4Obj: {
             handler(newValue, oldValue) {
-                this.cvss4ObjectToStr()
+                if (!this.cleared) {
+                    this.cvss4ObjectToStr()
+                }
+                this.cleared = false;
             },
             deep: true
         }
@@ -1506,6 +1518,13 @@ export default {
             }
             
             this.$emit('input', vectorString);
+        },
+
+        clearCalculator: function () {
+            this.cvss4Obj = {version:'4.0', AV:'', AC:'', AT: '', PR:'', UI:'', VC:'', VI:'', VA:'', SC:'', SI:'', SA:'', S:'', AU:'', R:'', V:'', RE:'', U:'', MAV:'', MAC:'', MAT:'', MPR:'', MUI:'', MVC:'', MVI:'', MVA:'', MSC:'', MSI:'', MSA:'', CR:'', IR:'', AR:'', E:''};
+            this.cvss4 = {};
+            this.$emit('input', null);
+            this.cleared = true;
         }
     }
 }

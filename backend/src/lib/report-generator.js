@@ -677,6 +677,19 @@ async function prepAuditData(data, settings) {
 
             tmpFinding.cvss4Obj = cvss4StrToObject(tmpCVSS.vectorString)
         }
+
+
+
+        if (tmpFinding.cvss4.baseScore) {
+            tmpFinding.effectiveScore = String(tmpFinding.cvss4.baseScore)
+            tmpFinding.effectiveSeverity = tmpFinding.cvss4.baseSeverity
+            tmpFinding.effectiveCellColor = tmpFinding.cvss4.cellColor
+        }
+        else {
+            tmpFinding.effectiveScore = String(tmpFinding.cvss.baseMetricScore)
+            tmpFinding.effectiveSeverity = tmpFinding.cvss.baseSeverity
+            tmpFinding.effectiveCellColor = tmpFinding.cvss.cellColor
+        }
     
         if (finding.customFields) {
             for (field of finding.customFields) {

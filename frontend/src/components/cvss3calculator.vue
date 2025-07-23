@@ -10,9 +10,18 @@
             </span>
             </div>
             <q-space />
+            <q-btn 
+            label="Clear"
+            color="grey"
+            unelevated
+            class="q-mr-sm text-white"
+            no-caps
+            @click="clearCalculator()"
+            />
+            <div style="width: 120px;"></div>
             <div class="scoreRating" :class="cvss.baseSeverity">
                 <div v-if="cvss.baseScore >= 0">
-                    <span class="baseMetricScore">{{cvss.baseScore}}</span>
+                    <span class="baseMetricScore">{{cvss.baseScore.toFixed(1)}}</span>
                     <span class="baseSeverity">({{cvss.baseSeverity}})</span>
                 </div>
                 <span class="baseSeverity" v-else>{{$t('cvss.infoWhenNoScore')}}</span>
@@ -935,7 +944,10 @@ export default {
         },
         cvssObj: {
             handler(newValue, oldValue) {
-                this.cvssObjectToStr()
+                if (!this.cleared) {
+                    this.cvssObjectToStr()
+                }
+                this.cleared = false;
             },
             deep: true
         }
@@ -1054,6 +1066,13 @@ export default {
                 this.cvss = {}
             }
             this.$emit('input', vectorString);
+        },
+
+        clearCalculator: function () {
+            this.cvssObj = {version:'3.1', AV:'', AC:'', PR:'', UI:'', S:'', C:'', I:'', A:'', E:'', RL:'', RC:'', CR:'', IR:'', AR:'', MAV:'', MAC:'', MPR:'', MUI:'', MS:'', MC:'', MI:'', MA:''};
+            this.cvss = {};
+            this.$emit('input', null);
+            this.cleared = true;
         }
     }
 }

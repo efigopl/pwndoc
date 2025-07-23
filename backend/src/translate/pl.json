@@ -31,11 +31,15 @@
 
     "Network_AV": "Przez sieć",
     "Adjacent Network_AV": "Przez sieć przylegającą",
+    "Adjacent_AV": "Przez sieć przylegającą",
     "Local_AV": "Przez dostęp lokalny",
     "Physical_AV": "Przez dostęp fizyczny",
 
     "Low_AC": "Niski",
     "High_AC": "Wysoki",
+
+    "None_AT": "Brak",
+    "Present_AT": "Obecne",
 
     "None_PR": "Żadne",
     "Low_PR": "Niskie",
@@ -55,7 +59,33 @@
 
     "None_UI": "Nie",
     "Required_UI": "Tak",
+    "Passive_UI": "Pasywna",
+    "Active_UI": "Aktywna",
 
     "Unchanged_S": "Nie",
-    "Changed_S": "Tak"
+    "Changed_S": "Tak",
+
+    "None_VC": "Brak",
+    "Low_VC": "Niski",
+    "High_VC": "Wysoki",
+
+    "None_VI": "Brak",
+    "Low_VI": "Niski",
+    "High_VI": "Wysoki",
+
+    "None_VA": "Brak",
+    "Low_VA": "Niski",
+    "High_VA": "Wysoki",
+
+    "None_SC": "Brak",
+    "Low_SC": "Niski",
+    "High_SC": "Wysoki",
+
+    "None_SI": "Brak",
+    "Low_SI": "Niski",
+    "High_SI": "Wysoki",
+
+    "None_SA": "Brak",
+    "Low_SA": "Niski",
+    "High_SA": "Wysoki"
 }
