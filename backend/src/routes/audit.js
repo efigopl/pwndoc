@@ -1,5 +1,6 @@
 module.exports = function(app, io) {
 
+    var YAML = require('js-yaml')
     var Response = require('../lib/httpResponse');
     var Audit = require('mongoose').model('Audit');
     var User = require('mongoose').model('User');
@@ -492,7 +493,9 @@ module.exports = function(app, io) {
             let today = new Date();
             let date = today.getFullYear() + "-" + ("0" + (today.getMonth() + 1)).slice(-2) + "-" + ("0" + today.getDate()).slice(-2);
             let name = audit.name.replace(/[\\\/:*?"<>|]/g, "")
-            Response.SendFile(res, `${date}-${name}.yaml`, audit);
+
+            res.set({"Content-Type": 'application/yaml'});
+            await Response.SendFileStream(res, `${date}-${name}.yaml`, YAML.dump(audit));
         })
         .catch(err => {
             console.log(err)
@@ -502,6 +505,7 @@ module.exports = function(app, io) {
 
     // Import audit from previously exported YAML
     app.post("/api/audits/import", acl.hasPermission('audits:create'), async function(req, res) {
+        req.setTimeout(0);
         let audit = req.body;
         if (audit.company) {
             await Company.getById(audit.company._id).catch(_ => {
@@ -779,6 +783,43 @@ module.exports = function(app, io) {
         if (typeof(req.body.resolved) === 'boolean') comment.resolved = req.body.resolved
 
         Audit.updateComment(acl.isAllowed(req.decodedToken.role, 'audits:comments:update-all'), req.params.auditId, req.decodedToken.id, req.params.commentId, comment)
+        .then(msg => {
+            io.to(req.params.auditId).emit('updateAudit');
+            Response.Ok(res, msg)
+        })
+        .catch(err => Response.Internal(res, err))
+    });
+
+    app.post("/api/audits/:auditId/comments/:commentId/reply", acl.hasPermission('audits:comments:create'), async function(req, res) {
+        var reply = {};
+        reply.author = req.decodedToken.id
+        if (req.body.text) reply.text = req.body.text;
+        console.log(reply)
+
+        Audit.createReply(acl.isAllowed(req.decodedToken.role, 'audits:comments:create-all'), req.params.auditId, req.decodedToken.id, req.params.commentId, reply)
+        .then(msg => {
+            io.to(req.params.auditId).emit('updateAudit');
+            Response.Ok(res, msg)
+        })
+        .catch(err => Response.Internal(res, err))
+    });
+
+    app.delete("/api/audits/:auditId/comments/:commentId/replies/:replyId", acl.hasPermission('audits:comments:delete'), async function(req, res) {
+        Audit.deleteReply(acl.isAllowed(req.decodedToken.role, 'audits:comments:delete-all'), req.params.auditId, req.decodedToken.id, req.params.commentId, req.params.replyId)
+        .then(msg => {
+            io.to(req.params.auditId).emit('updateAudit');
+            Response.Ok(res, msg);
+        })
+        .catch(err => Response.Internal(res, err))
+    });
+
+    app.put("/api/audits/:auditId/comments/:commentId/reply", acl.hasPermission('audits:comments:update'), async function(req, res) {
+        var reply = {};
+
+        reply._id = req.body._id
+        reply.text = req.body.text
+
+        Audit.updateReply(acl.isAllowed(req.decodedToken.role, 'audits:comments:update-all'), req.params.auditId, req.decodedToken.id, req.params.commentId, reply)
         .then(msg => {
             io.to(req.params.auditId).emit('updateAudit');
             Response.Ok(res, msg)

@@ -127,4 +127,16 @@ export default {
   updateComment: function(auditId, comment) {
     return Vue.prototype.$axios.put(`audits/${auditId}/comments/${comment._id}`, comment)
   },
+
+  createReply: function(auditId, commentId, reply) {
+    return Vue.prototype.$axios.post(`audits/${auditId}/comments/${commentId}/reply`, reply)
+  },
+
+  updateReply: function(auditId, commentId, reply) {
+    return Vue.prototype.$axios.put(`audits/${auditId}/comments/${commentId}/reply`, reply)
+  },
+
+  deleteReply: function(auditId, commentId, replyId) {
+    return Vue.prototype.$axios.delete(`audits/${auditId}/comments/${commentId}/replies/${replyId}`)
+  },
 }

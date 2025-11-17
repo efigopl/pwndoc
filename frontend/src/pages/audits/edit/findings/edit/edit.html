@@ -412,6 +412,9 @@ buttons
                 :editReply.sync="$parent.editReply"
                 :focusComment="focusComment"
                 :updateComment="updateComment"
+                :createReply="createReply"
+                :updateReply="updateReply"
+                :deleteReply="deleteReply"
                 :deleteComment="deleteComment"
                 >
                 </comments-list>
@@ -662,6 +665,9 @@ buttons
             :focusComment="focusComment"
             :updateComment="updateComment"
             :deleteComment="deleteComment"
+            :createReply="createReply"
+            :updateReply="updateReply"
+            :deleteReply="deleteReply"
             >
             </comments-list>
         </q-scroll-area>

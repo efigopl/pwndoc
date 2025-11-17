@@ -1092,6 +1092,9 @@ AuditSchema.statics.deleteComment = (isAdmin, auditId, userId, commentId) => {
 
             var comment = row.comments.id(commentId)
             if (comment === null) reject({fn: 'NotFound', message: 'Comment not found'})
+            else if (!(comment.author.equals(userId) || isAdmin)) {
+                throw({fn: 'Forbidden', message: 'Insufficient permissions to edit this comment'})
+            }
             else {
                 row.comments.pull(commentId)
                 return row.save()
@@ -1118,8 +1121,12 @@ AuditSchema.statics.updateComment = (isAdmin, auditId, userId, commentId, newCom
                 throw({fn: 'NotFound', message: 'Audit not found or Insufficient Privileges'})
 
             var comment = row.comments.id(commentId)
+
             if (comment === null)
                 reject({fn: 'NotFound', message: 'Comment not found'})         
+            else if (!(comment.author.equals(userId) || isAdmin)) {
+                throw({fn: 'Forbidden', message: 'Insufficient permissions to edit this comment'})
+            }
             else {
                 Object.keys(newComment).forEach((key) => {
                     comment[key] = newComment[key]
@@ -1136,6 +1143,115 @@ AuditSchema.statics.updateComment = (isAdmin, auditId, userId, commentId, newCom
     })
 }
 
+AuditSchema.statics.createReply = (isAdmin, auditId, userId, commentId, newReply) => {
+    return new Promise((resolve, reject) => { 
+        var query = Audit.findById(auditId)
+        if (!isAdmin)
+            query.or([{creator: userId}, {collaborators: userId}])
+
+        query.exec()
+        .then((row) => {
+            if (!row)
+                throw({fn: 'NotFound', message: 'Audit not found or Insufficient Privileges'})
+
+            var comment = row.comments.id(commentId)
+
+            if (comment === null)
+                reject({fn: 'NotFound', message: 'Comment not found'})         
+            else {
+                comment["replies"].push(newReply)
+                return row.save()
+            } 
+        })
+        .then(() => {
+            resolve("Reply created succesfully")
+        })
+        .catch((err) => {
+            reject(err)
+        })
+    })
+}
+
+AuditSchema.statics.deleteReply = (isAdmin, auditId, userId, commentId, replyId) => {
+    console.log(commentId)
+    return new Promise((resolve, reject) => { 
+        var query = Audit.findById(auditId)
+        if (!isAdmin)
+            query.or([{creator: userId}, {collaborators: userId}])
+        query.exec()
+        .then((row) => {
+            if (!row)
+                throw({fn: 'NotFound', message: 'Audit not found or Insufficient Privileges'})
+
+            var comment = row.comments.id(commentId)
+
+            if (comment === null)
+                reject({fn: 'NotFound', message: 'Comment not found'})         
+            else {
+                let reply = comment.replies.find(r => r.id === replyId)
+                if (!reply) {
+                    reject({fn: 'NotFound', message: 'Reply not found'})         
+                }
+
+                console.log(reply)
+                if (reply.author.equals(userId) || isAdmin) {
+                    comment.replies = comment.replies.filter(r => r.id !== replyId);
+                }
+                else {
+                    throw({fn: 'Forbidden', message: 'Insufficient permissions to delete this reply'})
+                }
+
+                return row.save()
+            } 
+        })
+        .then(() => {
+            resolve("Audit Comment updated successfully")
+        })
+        .catch((err) => {
+            reject(err)
+        })
+    })
+}
+AuditSchema.statics.updateReply = (isAdmin, auditId, userId, commentId, newReply) => {
+    return new Promise((resolve, reject) => { 
+        var query = Audit.findById(auditId)
+        if (!isAdmin)
+            query.or([{creator: userId}, {collaborators: userId}])
+        query.exec()
+        .then((row) => {
+            if (!row)
+                throw({fn: 'NotFound', message: 'Audit not found or Insufficient Privileges'})
+
+            var comment = row.comments.id(commentId)
+
+            if (comment === null)
+                reject({fn: 'NotFound', message: 'Comment not found'})         
+            else {
+                console.log(newReply._id)
+                let reply = comment.replies.find(r => r.id === newReply._id)
+                if (!reply) {
+                    reject({fn: 'NotFound', message: 'Reply not found'})         
+                }
+
+                console.log(reply)
+                if (reply.author.equals(userId) || isAdmin) {
+                    reply.text = newReply.text
+                }
+                else {
+                    throw({fn: 'Forbidden', message: 'Insufficient permissions to edit this reply'})
+                }
+
+                return row.save()
+            } 
+        })
+        .then(() => {
+            resolve("Audit Comment updated successfully")
+        })
+        .catch((err) => {
+            reject(err)
+        })
+    })
+}
 // Get images from audit ID list (mainly for backup purposes)
 AuditSchema.statics.getAuditsImages = (auditsIds = []) => {
     return new Promise((resolve, reject) => {
