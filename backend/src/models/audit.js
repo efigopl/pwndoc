@@ -1173,7 +1173,6 @@ AuditSchema.statics.createReply = (isAdmin, auditId, userId, commentId, newReply
 }
 
 AuditSchema.statics.deleteReply = (isAdmin, auditId, userId, commentId, replyId) => {
-    console.log(commentId)
     return new Promise((resolve, reject) => { 
         var query = Audit.findById(auditId)
         if (!isAdmin)
@@ -1193,7 +1192,6 @@ AuditSchema.statics.deleteReply = (isAdmin, auditId, userId, commentId, replyId)
                     reject({fn: 'NotFound', message: 'Reply not found'})         
                 }
 
-                console.log(reply)
                 if (reply.author.equals(userId) || isAdmin) {
                     comment.replies = comment.replies.filter(r => r.id !== replyId);
                 }
@@ -1227,13 +1225,11 @@ AuditSchema.statics.updateReply = (isAdmin, auditId, userId, commentId, newReply
             if (comment === null)
                 reject({fn: 'NotFound', message: 'Comment not found'})         
             else {
-                console.log(newReply._id)
                 let reply = comment.replies.find(r => r.id === newReply._id)
                 if (!reply) {
                     reject({fn: 'NotFound', message: 'Reply not found'})         
                 }
 
-                console.log(reply)
                 if (reply.author.equals(userId) || isAdmin) {
                     reply.text = newReply.text
                 }

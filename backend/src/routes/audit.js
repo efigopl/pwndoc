@@ -794,7 +794,6 @@ module.exports = function(app, io) {
         var reply = {};
         reply.author = req.decodedToken.id
         if (req.body.text) reply.text = req.body.text;
-        console.log(reply)
 
         Audit.createReply(acl.isAllowed(req.decodedToken.role, 'audits:comments:create-all'), req.params.auditId, req.decodedToken.id, req.params.commentId, reply)
         .then(msg => {
