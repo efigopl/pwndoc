@@ -48,7 +48,7 @@
                                 </q-item-section>
                                 <q-item-section side>
                                     <div v-if="!editComment && !replyingComment && !editReply">
-                                        <q-btn v-if="true" size="sm" dense flat color="primary" icon="undo" @click="comment.resolved = false; updateComment(comment)">
+                                        <q-btn v-if="canUpdateComment(commentt)" size="sm" dense flat color="primary" icon="undo" @click="comment.resolved = false; updateComment(comment)">
                                             <q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">
                                                 {{(comment.resolved)?$t('tooltip.reopenComment'):$t('tooltip.resolveComment')}}
                                             </q-tooltip> 
