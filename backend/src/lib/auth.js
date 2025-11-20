@@ -76,6 +76,14 @@ var builtInRoles = {
             'settings:read-public'
         ]
     },
+    commentator: {
+        allows: [
+            'audits:comments:create',
+            'audits:comments:update',
+            'audits:comments:delete',
+        ],
+        inherits: [ "user" ]
+    },
     admin: {
         allows: "*"
     }

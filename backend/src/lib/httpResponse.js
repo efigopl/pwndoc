@@ -33,6 +33,21 @@ function SendFile(res, filename, file){
 }
 exports.SendFile = SendFile;
 
+async function SendFileStream(res, filename, file) {
+    res.set({"Content-Disposition": `attachment; filename="${filename}"`});
+    
+    const CHUNK_SIZE = 1024 * 1024;
+    for (let i = 0; i < file.length; i += CHUNK_SIZE) {
+        const chunk = file.slice(i, i + CHUNK_SIZE);
+        const ok = res.write(chunk);
+        if (!ok) {
+            await new Promise(resolve => res.once('drain', resolve));
+        }
+    }
+    res.end()
+}
+exports.SendFileStream = SendFileStream;
+
 function SendImage(res, image){
     res.set({"Content-Type": "image/png", "Content-Length": image.length});
     res.status(200).send(image);

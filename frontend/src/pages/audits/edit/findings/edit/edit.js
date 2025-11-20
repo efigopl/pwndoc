@@ -544,6 +544,67 @@ export default {
                 })
         },
 
+        createReply: function(comment) {
+            let reply = { text: comment.replyTemp }
+            let commentId = comment._id || comment.commentId
+
+            console.log(reply)
+            AuditService.createReply(this.auditId, commentId, reply)
+                .then(() => {
+                    this.$parent.editComment = null
+                    this.$parent.editReply = null
+                    this.updateFinding()
+                })
+                .catch((err) => {
+                    Notify.create({
+                        message: err.response.data.datas,
+                        color: 'negative',
+                        textColor:'white',
+                        position: 'top-right'
+                    })
+                })
+        },
+
+        deleteReply: function(comment, reply) {
+            let commentId = comment._id || comment.commentId
+            let replyId = reply._id || reply.replyId
+
+            AuditService.deleteReply(this.auditId, commentId, replyId)
+                .then(() => {
+                    if (this.$parent.focusedComment === commentId)
+                        this.$parent.fieldHighlighted = ""
+                    document.dispatchEvent(new CustomEvent('comment-deleted', { detail: { id: commentId } }))
+                    this.updateFinding()
+                })
+                .catch((err) => {
+                    Notify.create({
+                        message: err.response.data.datas,
+                        color: 'negative',
+                        textColor:'white',
+                        position: 'top-right'
+                    })
+                })
+        },
+
+        updateReply: function(comment, reply) {
+            let commentId = comment._id || comment.commentId
+
+            AuditService.updateReply(this.auditId, commentId, reply)
+                .then(() => {
+                    this.$parent.editComment = null
+                    this.$parent.editReply = null
+                    this.updateFinding()
+                })
+                .catch((err) => {
+                    Notify.create({
+                        message: err.response.data.datas,
+                        color: 'negative',
+                        textColor:'white',
+                        position: 'top-right'
+                    })
+                })
+        },
+
         unsavedChanges: function() {
             if (this.overrideLeaveCheck)
                 return false

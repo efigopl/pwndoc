@@ -48,12 +48,12 @@
                                 </q-item-section>
                                 <q-item-section side>
                                     <div v-if="!editComment && !replyingComment && !editReply">
-                                        <q-btn v-if="canUpdateComment" size="sm" dense flat color="primary" icon="undo" @click="comment.resolved = false; updateComment(comment)">
+                                        <q-btn v-if="canUpdateComment(commentt)" size="sm" dense flat color="primary" icon="undo" @click="comment.resolved = false; updateComment(comment)">
                                             <q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">
                                                 {{(comment.resolved)?$t('tooltip.reopenComment'):$t('tooltip.resolveComment')}}
                                             </q-tooltip> 
                                         </q-btn>
-                                        <q-btn v-if="canDeleteComment" size="sm" dense flat color="negative" icon="delete" @click.stop="deleteComment(comment)">
+                                        <q-btn v-if="canDeleteComment(comment)" size="sm" dense flat color="negative" icon="delete" @click.stop="deleteComment(comment)">
                                             <q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">{{$t('tooltip.deleteComment')}}</q-tooltip> 
                                         </q-btn>
                                     </div>
@@ -70,15 +70,15 @@
                                 </q-item-section>
                                 <q-item-section side v-if="!comment.resolved">
                                     <div v-if="!editComment && !replyingComment && !editReply" class="q-gutter-xs">
-                                        <q-btn v-if="!comment.resolved && canUpdateComment" size="sm" dense flat color="primary" icon="edit" @click="editCommentClicked(comment)">
+                                        <q-btn v-if="!comment.resolved && canUpdateComment(comment)" size="sm" dense flat color="primary" icon="edit" @click="editCommentClicked(comment)">
                                             <q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">{{$t('tooltip.editComment')}}</q-tooltip> 
                                         </q-btn>
-                                        <q-btn v-if="canUpdateComment" size="sm" dense flat color="green" icon="done" @click="comment.resolved = true; updateComment(comment)">
+                                        <q-btn v-if="canUpdateComment(comment)" size="sm" dense flat color="green" icon="done" @click="comment.resolved = true; updateComment(comment)">
                                             <q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">
                                                 {{(comment.resolved)?$t('tooltip.reopenComment'):$t('tooltip.resolveComment')}}
                                             </q-tooltip> 
                                         </q-btn>
-                                        <q-btn v-if="canDeleteComment" size="sm" dense flat color="negative" icon="delete" @click.stop="deleteComment(comment)">
+                                        <q-btn v-if="canDeleteComment(comment)" size="sm" dense flat color="negative" icon="delete" @click.stop="deleteComment(comment)">
                                             <q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">{{$t('tooltip.deleteComment')}}</q-tooltip> 
                                         </q-btn>
                                     </div>
@@ -125,7 +125,7 @@
                                         dense
                                         autofocus
                                         bottom-slots
-                                        @keyup.ctrl.enter="reply.text = reply.textTemp; updateComment(comment)"
+                                        @keyup.ctrl.enter="reply.text = reply.textTemp; updateReply(comment, reply)"
                                         @keyup.esc="$emit('update:editReply', null)"
                                         >
                                             <template v-slot:hint>
@@ -133,24 +133,24 @@
                                             </template>
                                         </q-input>
                                         <q-btn class="float-right" outline color="primary" icon="close" @click="$emit('update:editReply', null)"></q-btn>
-                                        <q-btn class="float-right" unelevated color="blue-10" icon="done" @click="reply.text = reply.textTemp; updateComment(comment)"></q-btn>
+                                        <q-btn class="float-right" unelevated color="blue-10" icon="done" @click="reply.text = reply.textTemp; updateReply(comment, reply)"></q-btn>
                                     </div>
                                     <span v-else style="white-space: pre-line">{{reply.text}}</span>
                                     <span v-if="focusedComment === comment._id && editReply !== reply._id" class="text-caption">{{new Date(reply.createdAt).toLocaleDateString(systemLanguage, commentDateOptions)}}</span>
                                 </q-item-section>
                                 <q-item-section side top v-show="hoverReply === reply._id && !editReply && !comment.resolved && comment._id === focusedComment">
                                     <div v-if="!editComment && !replyingComment" class="q-gutter-xs">
-                                        <q-btn v-if="canUpdateComment" size="sm" dense flat color="primary" icon="edit" @click="$emit('update:editReply', reply._id); reply.textTemp = reply.text">
+                                        <q-btn v-if="canUpdateReply(reply)" size="sm" dense flat color="primary" icon="edit" @click="$emit('update:editReply', reply._id); reply.textTemp = reply.text">
                                             <q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">{{$t('tooltip.editReply')}}</q-tooltip> 
                                         </q-btn>
-                                        <q-btn v-if="canDeleteComment" size="sm" dense flat color="negative" icon="delete" @click="removeReplyFromComment(reply, comment)">
+                                        <q-btn v-if="canDeleteReply(reply)" size="sm" dense flat color="negative" icon="delete" @click="deleteReply(comment, reply)">
                                             <q-tooltip anchor="bottom middle" self="center left" :delay="500" content-class="text-bold">{{$t('tooltip.deleteReply')}}</q-tooltip> 
                                         </q-btn>
                                     </div>
                                 </q-item-section>
                             </q-item>
                             <!-- Reply input -->
-                            <q-item v-if="editComment !== comment._id && !comment.resolved && canUpdateComment">
+                            <q-item v-if="editComment !== comment._id && !comment.resolved && canCreateComment">
                                 <q-item-section>
                                     <div class="q-gutter-sm">
                                         <q-input
@@ -162,7 +162,7 @@
                                         hide-bottom-space
                                         :placeholder="(editComment || replyingComment || editReply)?$t('anotherCommentInProgress'):$t('reply')"
                                         :disable="!!editComment || !!editReply || (replyingComment && !comment.replyTemp)"
-                                        @keyup.ctrl.enter="updateComment(comment)"
+                                        @keyup.ctrl.enter="createReply(comment)"
                                         @keyup.esc="comment.replyTemp = null"
                                         >
                                             <template v-if="comment.replyTemp" v-slot:hint>
@@ -171,7 +171,7 @@
                                         </q-input>
                                         <template v-if="comment.replyTemp">
                                             <q-btn class="float-right" outline color="primary" icon="close" @click="comment.replyTemp = null" />
-                                            <q-btn class="float-right" unelevated color="blue-10" icon="send" @click="updateComment(comment)"/>
+                                            <q-btn class="float-right" unelevated color="blue-10" icon="send" @click="createReply(comment)"/>
                                         </template>
                                     </div>
                                 </q-item-section>
@@ -230,7 +230,19 @@ export default {
         focusComment: {
             type: Function,
             default: () => {}
-        }
+        },
+        createReply: {
+            type: Function,
+            default: () => {}
+        },
+        updateReply: {
+            type: Function,
+            default: () => {}
+        },
+        deleteReply: {
+            type: Function,
+            default: () => {}
+        },
     },
 
     data() {
@@ -269,14 +281,6 @@ export default {
 			return LocalStorage.getItem('system_language') || 'en-US'
 		},
 
-        canUpdateComment: function() {
-            return UserService.isAllowed('audits:comments:update')
-        },
-
-        canDeleteComment: function() {
-            return UserService.isAllowed('audits:comments:delete')
-        },
-
         numberOfFilteredComments: function() {
             let count = this.comments.length
             if (this.commentsFilter === 'active')
@@ -288,10 +292,39 @@ export default {
                 return `${count} ${$t('item')}`
             else
                 return `${count} ${$t('items')}`
-        }
+        },
+
+        canCreateComment: function() {
+            return UserService.isAllowed('audits:comments:create') 
+        },
     },
 
     methods: {
+        canDeleteComment(comment) {
+            return ((this.ownsComment(comment) && UserService.isAllowed('audits:comments:delete')) || UserService.isAllowed('audits:comments:delete-all'))
+        },
+
+        canUpdateComment(comment) {
+            return ((this.ownsComment(comment) && UserService.isAllowed('audits:comments:update')) || UserService.isAllowed('audits:comments:update-all'))
+            // return UserService.isAllowed('audits:comments:update')
+        },
+
+        ownsComment(comment) {
+            return comment.author._id === UserService.user.id
+        },
+
+        canDeleteReply(reply) {
+            return ((this.ownsReply(reply) && UserService.isAllowed('audits:comments:delete')) || UserService.isAllowed('audits:comments:delete-all'))
+        },
+
+        canUpdateReply(reply) {
+            return ((this.ownsReply(reply) && UserService.isAllowed('audits:comments:update')) || UserService.isAllowed('audits:comments:update-all'))
+        },
+
+        ownsReply(reply) {
+            return reply.author._id === UserService.user.id
+        },
+
         removeReplyFromComment: function(reply, comment) {
             comment.replies = comment.replies.filter(e => e._id !== reply._id)
             this.updateComment(comment)
