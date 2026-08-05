@@ -273,7 +273,7 @@ export default {
         exportAudit: function(auditId) {
             AuditService.exportAudit(auditId)
             .then((response) => {
-                var data = YAML.dump(response.data);
+                var data = typeof response.data === 'string' ? response.data : YAML.dump(response.data);
                 var blob = new Blob([data], {type: 'application/yaml'});
                 var link = document.createElement('a');
                 link.href = window.URL.createObjectURL(blob);
