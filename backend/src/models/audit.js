@@ -467,7 +467,7 @@ AuditSchema.statics.importAudit = (audit) => {
         })
         .catch((err) => {
             if (err.name === "ValidationError")
-                reject({fn: 'BadParameters', message: 'Audit validation failed'})
+                reject({fn: 'BadParameters', message: 'Audit validation failed: ' + err.message})
             else
                 reject(err)
         })

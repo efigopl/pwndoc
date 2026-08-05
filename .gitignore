@@ -1,4 +1,7 @@
 .DS_Store
+.claude.json
+.claude
+claude-*
 .thumbs.db
 node_modules
 /dist

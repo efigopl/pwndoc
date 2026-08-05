@@ -548,7 +548,6 @@ export default {
             let reply = { text: comment.replyTemp }
             let commentId = comment._id || comment.commentId
 
-            console.log(reply)
             AuditService.createReply(this.auditId, commentId, reply)
                 .then(() => {
                     this.$parent.editComment = null

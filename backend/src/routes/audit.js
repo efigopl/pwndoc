@@ -494,6 +494,9 @@ module.exports = function(app, io) {
             let date = today.getFullYear() + "-" + ("0" + (today.getMonth() + 1)).slice(-2) + "-" + ("0" + today.getDate()).slice(-2);
             let name = audit.name.replace(/[\\\/:*?"<>|]/g, "")
 
+            // Flatten ObjectId instances to hex strings so YAML serializes them correctly
+            audit = JSON.parse(JSON.stringify(audit));
+
             res.set({"Content-Type": 'application/yaml'});
             await Response.SendFileStream(res, `${date}-${name}.yaml`, YAML.dump(audit));
         })
@@ -508,23 +511,53 @@ module.exports = function(app, io) {
         req.setTimeout(0);
         let audit = req.body;
         if (audit.company) {
-            await Company.getById(audit.company._id).catch(_ => {
+            let companyId = audit.company._id || audit.company;
+            await Company.getById(companyId).then(_ => {
+                audit.company = companyId;
+            }).catch(_ => {
                 delete audit.company;
             });
         }
 
-        await User.getById(audit.creator._id).catch(async _ => {
-            audit.creator = await User.getById(req.decodedToken.id);
+        if (audit.client) {
+            let clientId = audit.client._id || audit.client;
+            await Client.getById(clientId).then(_ => {
+                audit.client = clientId;
+            }).catch(_ => {
+                delete audit.client;
+            });
+        }
+
+        let creatorId = audit.creator._id || audit.creator;
+        await User.getById(creatorId).then(_ => {
+            audit.creator = creatorId;
+        }).catch(async _ => {
+            audit.creator = req.decodedToken.id;
         });
+
         for (let i = audit.collaborators.length - 1; i >= 0; i--) {
             let collab = audit.collaborators[i];
+            let collabId = collab._id || collab;
 
-            await User.getById(collab._id).catch(_ => {
+            await User.getById(collabId).then(_ => {
+                audit.collaborators[i] = collabId;
+            }).catch(_ => {
                 audit.collaborators.splice(i, 1);
             });
         }
 
-        for (let i = 0; i < audit.images.length; i++) {
+        for (let i = (audit.reviewers || []).length - 1; i >= 0; i--) {
+            let reviewer = audit.reviewers[i];
+            let reviewerId = reviewer._id || reviewer;
+
+            await User.getById(reviewerId).then(_ => {
+                audit.reviewers[i] = reviewerId;
+            }).catch(_ => {
+                audit.reviewers.splice(i, 1);
+            });
+        }
+
+        for (let i = 0; i < (audit.images || []).length; i++) {
             let image = audit.images[i]
 
             let oldId = image._id;
@@ -533,7 +566,7 @@ module.exports = function(app, io) {
             newId = newId._id;
 
             if (oldId == newId) {
-                return
+                continue
             }
 
             audit.findings.forEach(finding => {
@@ -542,8 +575,11 @@ module.exports = function(app, io) {
                 finding.poc = utils.replaceImageId(finding.poc, oldId, newId)
                 finding.scope = utils.replaceImageId(finding.scope, oldId, newId)
                 finding.remediation = utils.replaceImageId(finding.remediation, oldId, newId)
+                finding.retestDescription = utils.replaceImageId(finding.retestDescription, oldId, newId)
             })
         }
+
+        delete audit.images;
 
         Audit.importAudit(audit)
             .then(msg => Response.Created(res, msg))
